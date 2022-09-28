@@ -12,16 +12,17 @@ exports.add = async (req, res) => {
     const escapedTitle = escape(title);
     const escapedAuthor = escape(author);
     const escapedEmail = escape(email);
-    // console.log('jestem');
-    // const pattern = new RegExp(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g);
-    // console.log('tu');
+    const pattern = new RegExp(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g);
+
     // const emailMatched = email.match(pattern).join('');
-    // console.log(emailMatched, email);
     // console.log(emailMatched.length, email.length);
-    // console.log('i tu');
     // if (emailMatched.length < email.length)
-    //   res.status(500).json({ message: 'Invalid characters...' });
-    // console.log('a tu?');
+    //   res.status(500).json({ message: 'Invalid characters...' });??
+
+    if (!pattern.test(email)) {
+      // throw Error('Invalid email')
+      return res.status(500).json({ message: 'bad email' });
+    }
     const file = req.files.file;
     const fileExtension = file.name.split('.').slice(1)[0];
 
@@ -33,8 +34,6 @@ exports.add = async (req, res) => {
       fileExtension === 'jpg'
     ) {
       // if fields are not empty...
-      // /^[A-Z]{3}$/)
-      // const reg = /^[a-z\d]+[\w\d.-]*@(?:[a-z\d]+[a-z\d-]+\.){1,5}[a-z]{2,6}$/i;
 
       const fileName = file.path.split('/').slice(-1)[0]; // cut only filename from full path, e.g. C:/test/abc.jpg -> abc.jpg
       const newPhoto = new Photo({
@@ -50,7 +49,7 @@ exports.add = async (req, res) => {
       throw new Error('Wrong input!');
     }
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -60,7 +59,7 @@ exports.loadAll = async (req, res) => {
   try {
     res.json(await Photo.find());
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -95,6 +94,6 @@ exports.vote = async (req, res) => {
       }
     }
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({ message: err.message });
   }
 };
