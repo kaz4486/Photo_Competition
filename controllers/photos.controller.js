@@ -71,28 +71,44 @@ exports.vote = async (req, res) => {
     const voterToUpdate = await Voter.findOne({ user: clientIp });
     const photoToUpdate = await Photo.findOne({ _id: req.params.id });
 
-    if (!photoToUpdate) res.status(404).json({ message: 'Not found' });
+    if (!photoToUpdate) return res.status(404).json({ message: 'Not found' });
 
     if (!voterToUpdate) {
       const newVoter = new Voter({ user: clientIp, votes: photoToUpdate._id });
       await newVoter.save();
       photoToUpdate.votes++;
       photoToUpdate.save();
-      res.send({ message: 'OK with newVoter' });
+      return res.send({ message: 'OK with newVoter' });
     } else {
-      const voterWithPhoto = await Voter.findOne({ votes: photoToUpdate._id });
-      if (!voterWithPhoto) {
-        await Voter.findOneAndUpdate(
-          { user: clientIp },
-          { $push: { votes: photoToUpdate._id } }
-        );
-        photoToUpdate.votes++;
-        photoToUpdate.save();
-        res.send({ message: 'OK with oldVoter' });
-      } else {
-        res.status(500).json({ message: 'Vote error' });
-      }
+      const voterWithPhoto = await Voter.findOne({
+        user: clientIp,
+        votes: photoToUpdate._id,
+      });
+      if (voterWithPhoto)
+        return res.status(500).json({ message: 'Vote error' });
+      await Voter.findOneAndUpdate(
+        { user: clientIp },
+        { $push: { votes: photoToUpdate._id } }
+      );
+      photoToUpdate.votes++;
+      photoToUpdate.save();
+      return res.send({ message: 'OK with oldVoter' });
     }
+
+    // else {
+    //   const voterWithPhoto = await Voter.findOne({ votes: photoToUpdate._id });
+    //   if (!voterWithPhoto) {
+    //     await Voter.findOneAndUpdate(
+    //       { user: clientIp },
+    //       { $push: { votes: photoToUpdate._id } }
+    //     );
+    //     photoToUpdate.votes++;
+    //     photoToUpdate.save();
+    //     res.send({ message: 'OK with oldVoter' });
+    //   } else {
+    //     res.status(500).json({ message: 'Vote error' });
+    //   }
+    // }
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
